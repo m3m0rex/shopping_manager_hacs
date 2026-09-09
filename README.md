@@ -1,43 +1,61 @@
-# Shopping Manager – HACS Integration
+# Shopping Manager (HACS Integration)
 
-Home Assistant Custom Integration für den [Shopping Manager](https://github.com/m3m0rex/shopping_manager).
-Dieses Repo enthält **nur** die HA-Integration (HACS-tauglich).
+Home-Assistant-Integration für die [Shopping-Manager-App](https://github.com/m3m0rex/shopping_manager).
+Spiegelt deine Einkaufslisten als `todo.*`-Entitäten nach Home Assistant und bietet
+Services zum Anlegen/Umbenennen/Löschen von Listen.
 
-## Installation über HACS (einfachste Methode)
+## Installation (HACS)
 
-1. HACS öffnen → Kategorie **Integrationen**
-2. Oben rechts auf die drei Punkte → **Benutzerdefiniertes Repository**
-3. Repository-URL: `https://github.com/m3m0rex/shopping_manager_hacs`
-4. Kategorie: **Integration** → Hinzufügen
-5. Im HACS-Store „Shopping Manager" suchen und installieren
-6. Home Assistant **neu starten**
-7. *Einstellungen → Geräte & Dienste → Integration hinzufügen → Shopping Manager*
-8. Host-URL eingeben (z.B. `http://localhost:3000` bzw. IP deines Servers)
-   – Falls im Backend `API_TOKEN` gesetzt ist, hier ebenfalls eintragen
-9. Fertig: du hast
-   - 3 Sensoren: `sensor.shopping_manager_offen`, `_abgehakt`, `_gesamt`
-   - Eine native **Todo-Liste** `todo.shopping_manager_einkaufsliste`
-   - Zwei Services: `shopping_manager.add_item` und `shopping_manager.toggle_checked`
+1. HACS → **Integrationen** → ⋮ → **Benutzerdefiniertes Repository hinzufügen**
+   - URL: `https://github.com/m3m0rex/shopping_manager_hacs`
+   - Kategorie: **Integration**
+2. HACS → **Integrationen** → **Shopping Manager** installieren
+3. **Einstellungen → Geräte & Dienste → + Integration** → **Shopping Manager**
+   - **Host:** URL deiner Shopping-Manager-App (z. B. `https://deine-domain.de`)
+   - **Token:** Benutzer-Token aus der App (Einstellungen → Integrationen → "Token erzeugen")
 
-## Variante B: Manuell (ohne HACS)
+## Was die Integration macht
 
-Kopiere den Ordner `custom_components/shopping_manager/` nach
-`<HA_CONFIG>/custom_components/shopping_manager/` und starte HA neu.
-Danach wie oben unter Schritt 7–9 fortfahren.
+- Erstellt pro Backend-Liste eine `todo.shopping_manager_<...>`-Entity in HA
+- Aktualisiert die Artikel regelmäßig (Scan-Intervall in der Config)
+- Meldet `entity_id ↔ list_id` ans Backend (`/api/ha/mapping`), damit die App
+  die HA-Liste der richtigen Backend-Liste zuordnen kann
+- Services zum Verwalten von Listen (siehe unten)
 
-## Services nutzen (Beispiel Automatisierung)
+## Services
+
+| Service | Felder | Zweck |
+|---------|--------|-------|
+| `shopping_manager.create_list` | `name` | Neue Liste anlegen |
+| `shopping_manager.rename_list` | `list_id`, `name` | Liste umbenennen |
+| `shopping_manager.delete_list` | `list_id` | Liste löschen |
+
+Beispiel (Entwicklerwerkzeuge → Dienste):
 
 ```yaml
-service: shopping_manager.add_item
+service: shopping_manager.create_list
 data:
-  name: "Milch"
-  quantity: "2 l"
+  name: Wocheneinkauf
 ```
 
-## Todo-Liste im Dashboard
+## Zwei-Wege-Sync mit der App
 
-Füge eine **Todo-Liste**-Karte hinzu und wähle
-`Einkaufsliste (Shopping Manager)`. Artikel können direkt abgehakt werden
-und erscheinen live in der App.
+- **App → HA:** Änderungen in der App landen im Backend; diese Integration liest sie
+  und spiegelt sie in die `todo.*`-Entities.
+- **HA → App:** Beschreibbare HA-Listen (z. B. *Local To-Do* Integration) können direkt
+  aus der App bearbeitet werden; reine `shopping_manager_*`-Spiegel sind read-only
+  und werden aus dem Backend gespeichert.
 
-Siehe auch `configuration.yaml.example` für REST-Sensor / Webhook-Variante.
+## Troubleshooting
+
+- **Listen fehlen in HA:** Integration neu laden (Einstellungen → ⋮ → "Neu laden") oder
+  Scan-Intervall verkürzen.
+- **401 / Verbindung fehlgeschlagen:** Token in der App erneuern und in der
+  Integration erneut eintragen.
+- **Logs:** HA → Einstellungen → Protokolle → nach `shopping_manager` filtern.
+
+## Versionierung
+
+`manifest.json` `version` MUSS mit einem getaggten GitHub-Release übereinstimmen
+(HACS lehnt nur einen Commit-Hash ab). Releases: siehe
+https://github.com/m3m0rex/shopping_manager_hacs/releases
