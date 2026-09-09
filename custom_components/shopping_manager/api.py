@@ -71,6 +71,16 @@ class ShoppingManagerApi:
         data = await self._request("GET", "/api/items/summary/counts/all") or {}
         return data
 
+    async def create_list(self, name: str) -> dict:
+        """Create a new shopping list (returns {id, name})."""
+        return await self._request("POST", "/api/lists", json={"name": name}) or {}
+
+    async def rename_list(self, list_id: int, name: str) -> dict:
+        return await self._request("PATCH", f"/api/lists/{list_id}", json={"name": name}) or {}
+
+    async def delete_list(self, list_id: int) -> None:
+        await self._request("DELETE", f"/api/lists/{list_id}")
+
 
 class ApiError(Exception):
     """Generic API error."""

@@ -35,3 +35,50 @@ shopping_manager_toggle_checked:
       name: Konfigurationseintrag
       description: Die Shopping Manager Instanz (optional, bei mehreren).
       required: false
+
+shopping_manager_create_list:
+  name: Einkaufsliste anlegen
+  description: Legt eine neue Shopping Manager Einkaufsliste an (erscheint in der App).
+  fields:
+    name:
+      name: Listenname
+      description: Name der neuen Liste (z.B. "Wocheneinkauf").
+      required: true
+      example: "Wocheneinkauf"
+    config_entry:
+      name: Konfigurationseintrag
+      description: Die Shopping Manager Instanz (optional, bei mehreren).
+      required: false
+
+shopping_manager_rename_list:
+  name: Einkaufsliste umbenennen
+  description: Benennt eine vorhandene Shopping Manager Einkaufsliste um.
+  fields:
+    list_id:
+      name: Listen-ID
+      description: Die ID der Liste (aus dem Backend).
+      required: true
+      example: 15
+    name:
+      name: Neuer Name
+      description: Neuer Name der Liste.
+      required: true
+      example: "Wocheneinkauf neu"
+    config_entry:
+      name: Konfigurationseintrag
+      description: Die Shopping Manager Instanz (optional, bei mehreren).
+      required: false
+
+shopping_manager_delete_list:
+  name: Einkaufsliste löschen
+  description: Löscht eine Shopping Manager Einkaufsliste (inkl. aller Artikel).
+  fields:
+    list_id:
+      name: Listen-ID
+      description: Die ID der Liste (aus dem Backend).
+      required: true
+      example: 15
+    config_entry:
+      name: Konfigurationseintrag
+      description: Die Shopping Manager Instanz (optional, bei mehreren).
+      required: false
