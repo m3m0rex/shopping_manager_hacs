@@ -67,7 +67,9 @@ class ShoppingManagerApi:
         return data or []
 
     async def get_counts(self) -> dict:
-        return await self._request("GET", "/api/items/summary/counts") or {}
+        # Multi-list: aggregate counts across ALL accessible lists.
+        data = await self._request("GET", "/api/items/summary/counts/all") or {}
+        return data
 
 
 class ApiError(Exception):
