@@ -27,17 +27,24 @@ class ShoppingManagerApi:
                     return None
                 return await resp.json()
 
-    async def get_items(self, status: str = "all", search: str = "") -> list:
-        params = {}
+    async def get_lists(self) -> list:
+        """Return all lists accessible to the (token) user: [{id, name, is_owner}]."""
+        data = await self._request("GET", "/api/lists") or []
+        return data
+
+    async def get_items_for_list(self, list_id: int, status: str = "all") -> list:
+        params = {"list_id": list_id}
         if status != "all":
             params["status"] = status
-        if search:
-            params["search"] = search
         data = await self._request("GET", "/api/items", params=params)
         return data or []
 
-    async def add_item(self, name: str, quantity: str = "", note: str = "") -> dict:
-        payload = {"name": name}
+    async def get_counts_for_list(self, list_id: int) -> dict:
+        data = await self._request("GET", "/api/items/summary/counts", params={"list_id": list_id}) or {}
+        return data
+
+    async def add_item_to_list(self, list_id: int, name: str, quantity: str = "", note: str = "") -> dict:
+        payload = {"list_id": list_id, "name": name}
         if quantity:
             payload["quantity"] = quantity
         if note:
@@ -49,6 +56,15 @@ class ShoppingManagerApi:
 
     async def delete_item(self, item_id: int) -> None:
         await self._request("DELETE", f"/api/items/{item_id}")
+
+    async def get_items(self, status: str = "all", search: str = "") -> list:
+        params = {}
+        if status != "all":
+            params["status"] = status
+        if search:
+            params["search"] = search
+        data = await self._request("GET", "/api/items", params=params)
+        return data or []
 
     async def get_counts(self) -> dict:
         return await self._request("GET", "/api/items/summary/counts") or {}

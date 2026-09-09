@@ -1,4 +1,4 @@
-"""DataUpdateCoordinator for Shopping Manager."""
+"""DataUpdateCoordinator for Shopping Manager (multi-list)."""
 
 from datetime import timedelta
 import logging
@@ -12,7 +12,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 class ShoppingManagerCoordinator(DataUpdateCoordinator):
-    """Coordinate fetching of shopping list items."""
+    """Coordinate fetching of shopping lists; one entry per list."""
 
     def __init__(self, hass: HomeAssistant, api: ShoppingManagerApi, scan_interval: int) -> None:
         super().__init__(
@@ -25,24 +25,37 @@ class ShoppingManagerCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self):
         try:
-            items = await self.api.get_items()
-            counts = await self.api.get_counts()
+            lists = await self.api.get_lists()
         except InvalidAuth as err:
             raise UpdateFailed(f"Auth fehlgeschlagen: {err}") from err
         except ApiError as err:
             raise UpdateFailed(f"API-Fehler: {err}") from err
-        # Normalize: ensure consistent keys
-        normalized = []
-        for it in items:
-            normalized.append({
-                "id": it.get("id"),
-                "name": it.get("name", ""),
-                "quantity": it.get("quantity", ""),
-                "checked": bool(it.get("checked")),
-                "source": it.get("source", "manual"),
-                "note": it.get("note") or "",
-                "image_url": it.get("image_url"),
-                "external_url": it.get("external_url"),
-                "sort_order": it.get("sort_order", 0),
-            })
-        return {"items": normalized, "counts": counts}
+
+        result = {}
+        for lst in lists:
+            list_id = lst.get("id")
+            try:
+                items = await self.api.get_items_for_list(list_id)
+            except (ApiError, InvalidAuth):
+                items = []
+            normalized = []
+            for it in items:
+                normalized.append({
+                    "id": it.get("id"),
+                    "list_id": list_id,
+                    "name": it.get("name", ""),
+                    "quantity": it.get("quantity", ""),
+                    "checked": bool(it.get("checked")),
+                    "source": it.get("source", "manual"),
+                    "note": it.get("note") or "",
+                    "image_url": it.get("image_url"),
+                    "external_url": it.get("external_url"),
+                    "sort_order": it.get("sort_order", 0),
+                })
+            result[list_id] = {
+                "id": list_id,
+                "name": lst.get("name", f"Liste {list_id}"),
+                "is_owner": bool(lst.get("is_owner")),
+                "items": normalized,
+            }
+        return result

@@ -1,4 +1,4 @@
-"""Sensor platform for Shopping Manager."""
+"""Sensor platform for Shopping Manager (aggregated counts across all lists)."""
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -40,6 +40,18 @@ class _Base(CoordinatorEntity, SensorEntity):
             "model": "Shopping Manager",
         }
 
+    def _counts(self):
+        # Aggregate across all lists held by the coordinator
+        data = self.coordinator.data or {}
+        open_c = checked_c = 0
+        for lst in data.values():
+            for it in lst.get("items", []):
+                if it["checked"]:
+                    checked_c += 1
+                else:
+                    open_c += 1
+        return {"open": open_c, "checked": checked_c, "total": open_c + checked_c}
+
 
 class ShoppingManagerOpenSensor(_Base):
     _attr_translation_key = "open_count"
@@ -47,7 +59,7 @@ class ShoppingManagerOpenSensor(_Base):
 
     @property
     def native_value(self):
-        return (self.coordinator.data or {}).get("counts", {}).get("open", 0)
+        return self._counts()["open"]
 
 
 class ShoppingManagerCheckedSensor(_Base):
@@ -56,7 +68,7 @@ class ShoppingManagerCheckedSensor(_Base):
 
     @property
     def native_value(self):
-        return (self.coordinator.data or {}).get("counts", {}).get("checked", 0)
+        return self._counts()["checked"]
 
 
 class ShoppingManagerTotalSensor(_Base):
@@ -65,4 +77,4 @@ class ShoppingManagerTotalSensor(_Base):
 
     @property
     def native_value(self):
-        return (self.coordinator.data or {}).get("counts", {}).get("total", 0)
+        return self._counts()["total"]

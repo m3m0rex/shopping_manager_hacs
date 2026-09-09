@@ -1,4 +1,4 @@
-"""Todo platform for Shopping Manager (native todo list in HA)."""
+"""Todo platform for Shopping Manager (one HA todo list per shopping list)."""
 
 from __future__ import annotations
 
@@ -27,20 +27,47 @@ async def async_setup_entry(
 ) -> None:
     coordinator = hass.data[DOMAIN][entry.entry_id]["coordinator"]
     api = hass.data[DOMAIN][entry.entry_id]["api"]
-    async_add_entities([ShoppingManagerTodoList(coordinator, api, entry)], True)
+
+    async def _refresh(now=None):
+        await coordinator.async_request_refresh()
+
+    # Build initial entities from the lists already present after first refresh
+    data = coordinator.data or {}
+    entities = []
+    for list_id in data:
+        entities.append(ShoppingManagerTodoList(coordinator, api, entry, list_id))
+    async_add_entities(entities, True)
+
+    # Track lists added/removed across refreshes and add new todo entities.
+    seen = set(data.keys())
+
+    @callback
+    def _on_data_update():
+        current = set((coordinator.data or {}).keys())
+        for list_id in current - seen:
+            async_add_entities([ShoppingManagerTodoList(coordinator, api, entry, list_id)], True)
+        seen.clear()
+        seen.update(current)
+
+    coordinator.async_add_listener(_on_data_update)
 
 
 class ShoppingManagerTodoList(CoordinatorEntity, TodoListEntity):
-    """A Shopping Manager todo list."""
+    """One Shopping Manager list shown as a HA todo list."""
 
     _attr_has_entity_name = True
-    _attr_name = "Einkaufsliste"
 
-    def __init__(self, coordinator, api, entry) -> None:
+    def __init__(self, coordinator, api, entry, list_id) -> None:
         super().__init__(coordinator)
         self._api = api
         self._entry = entry
-        self._attr_unique_id = f"{entry.entry_id}_todo"
+        self._list_id = list_id
+        self._attr_unique_id = f"{entry.entry_id}_list_{list_id}"
+
+    @property
+    def name(self) -> str:
+        lst = (self.coordinator.data or {}).get(self._list_id, {})
+        return lst.get("name", f"Liste {self._list_id}")
 
     @property
     def device_info(self):
@@ -53,9 +80,9 @@ class ShoppingManagerTodoList(CoordinatorEntity, TodoListEntity):
 
     @property
     def todo_items(self) -> list[TodoItem]:
-        items = (self.coordinator.data or {}).get("items", [])
+        lst = (self.coordinator.data or {}).get(self._list_id, {})
         result = []
-        for it in items:
+        for it in lst.get("items", []):
             status = TodoItemStatus.COMPLETED if it["checked"] else TodoItemStatus.NEEDS_ACTION
             result.append(
                 TodoItem(
@@ -68,7 +95,7 @@ class ShoppingManagerTodoList(CoordinatorEntity, TodoListEntity):
         return result
 
     async def async_create_todo_item(self, item: TodoItem) -> None:
-        await self._api.add_item(item.summary, quantity=item.description or "")
+        await self._api.add_item_to_list(self._list_id, item.summary, quantity=item.description or "")
         await self.coordinator.async_request_refresh()
 
     async def async_delete_todo_items(self, uids: list[str]) -> None:
