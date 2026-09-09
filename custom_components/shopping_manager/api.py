@@ -81,6 +81,10 @@ class ShoppingManagerApi:
     async def delete_list(self, list_id: int) -> None:
         await self._request("DELETE", f"/api/lists/{list_id}")
 
+    async def report_mapping(self, entity_id: str, list_id: int) -> None:
+        """Tell the backend which HA todo entity maps to which backend list."""
+        await self._request("POST", "/api/ha/mapping", json={"entity_id": entity_id, "list_id": list_id})
+
 
 class ApiError(Exception):
     """Generic API error."""

@@ -37,6 +37,13 @@ async def async_setup_entry(
     for list_id in data:
         entities.append(ShoppingManagerTodoList(coordinator, api, entry, list_id))
     async_add_entities(entities, True)
+    # Report entity_id -> list_id mapping so the app can resolve HA lists to backend lists
+    for list_id in data:
+        entity_id = f"todo.shopping_manager_{entry.entry_id}_list_{list_id}"
+        try:
+            await api.report_mapping(entity_id, int(list_id))
+        except Exception:  # noqa: BLE001 - mapping is best-effort
+            pass
 
     # Track lists added/removed across refreshes and add new todo entities.
     seen = set(data.keys())
@@ -46,6 +53,8 @@ async def async_setup_entry(
         current = set((coordinator.data or {}).keys())
         for list_id in current - seen:
             async_add_entities([ShoppingManagerTodoList(coordinator, api, entry, list_id)], True)
+            entity_id = f"todo.shopping_manager_{entry.entry_id}_list_{list_id}"
+            hass.async_create_task(api.report_mapping(entity_id, int(list_id)))
         seen.clear()
         seen.update(current)
 
