@@ -1,0 +1,37 @@
+shopping_manager_add_item:
+  name: Einkaufsliste Eintrag hinzufügen
+  description: Fügt der Shopping Manager Einkaufsliste einen Artikel hinzu.
+  fields:
+    name:
+      name: Artikelname
+      description: Name des Artikels (z.B. "Milch").
+      required: true
+      example: "Milch"
+    quantity:
+      name: Menge
+      description: Optionale Menge (z.B. "2 l").
+      required: false
+      example: "2 l"
+    config_entry:
+      name: Konfigurationseintrag
+      description: Die Shopping Manager Instanz (optional, bei mehreren).
+      required: false
+
+shopping_manager_toggle_checked:
+  name: Artikel abhaken / abwählen
+  description: Setzt den "abgehakt"-Status eines Artikels.
+  fields:
+    item_id:
+      name: Artikel-ID
+      description: Die ID des Artikels (aus dem Backend).
+      required: true
+      example: 12
+    checked:
+      name: Abgehakt
+      description: true = abgehakt, false = offen.
+      required: false
+      example: true
+    config_entry:
+      name: Konfigurationseintrag
+      description: Die Shopping Manager Instanz (optional, bei mehreren).
+      required: false

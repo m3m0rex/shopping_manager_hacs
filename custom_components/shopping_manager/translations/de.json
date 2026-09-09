@@ -1,0 +1,33 @@
+{
+  "entity": {
+    "shopping_manager": {
+      "open_count": { "name": "Offen" },
+      "checked_count": { "name": "Abgehakt" },
+      "total_count": { "name": "Gesamt" }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Shopping Manager",
+        "description": "Verbinde dich mit deiner Shopping Manager Instanz.",
+        "data": {
+          "host": { "name": "Host-URL", "description": "Vollständige URL inkl. Port, z.B. http://localhost:3000" },
+          "token": { "name": "API-Token (optional)", "description": "Nur nötig, wenn im Backend API_TOKEN gesetzt ist." },
+          "scan_interval": { "name": "Aktualisierungsintervall (Sekunden)" }
+        }
+      },
+      "init": {
+        "title": "Optionen",
+        "data": {
+          "scan_interval": { "name": "Aktualisierungsintervall (Sekunden)" },
+          "token": { "name": "API-Token (optional)" }
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Backend fehlgeschlagen.",
+      "invalid_auth": "Token ungültig."
+    }
+  }
+}

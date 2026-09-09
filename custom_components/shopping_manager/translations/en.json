@@ -1,0 +1,33 @@
+{
+  "entity": {
+    "shopping_manager": {
+      "open_count": { "name": "Open" },
+      "checked_count": { "name": "Checked" },
+      "total_count": { "name": "Total" }
+    }
+  },
+  "config": {
+    "step": {
+      "user": {
+        "title": "Shopping Manager",
+        "description": "Connect to your Shopping Manager instance.",
+        "data": {
+          "host": { "name": "Host URL", "description": "Full URL including port, e.g. http://localhost:3000" },
+          "token": { "name": "API token (optional)", "description": "Only needed if API_TOKEN is set in the backend." },
+          "scan_interval": { "name": "Refresh interval (seconds)" }
+        }
+      },
+      "init": {
+        "title": "Options",
+        "data": {
+          "scan_interval": { "name": "Refresh interval (seconds)" },
+          "token": { "name": "API token (optional)" }
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the backend.",
+      "invalid_auth": "Invalid token."
+    }
+  }
+}

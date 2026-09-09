@@ -1,0 +1,56 @@
+# ============================================================
+# Shopping Manager – Home Assistant Anbindung
+# ============================================================
+# Es gibt ZWEI Wege, die App mit Home Assistant zu verbinden:
+#
+# 1) EIGENE HACS-KOMPONENTE (empfohlen)
+#    - Kopiere den Ordner custom_components/shopping_manager/ nach
+#      <HA_CONFIG>/custom_components/shopping_manager/
+#    - ODER: füge dieses Repo in HACS als "Integration" hinzu
+#      (Menü -> HACS -> Integrationen -> oben rechts "Benutzerdefiniertes
+#       Repository" -> URL: https://github.com/m3m0rex/shopping_manager
+#       -> Kategorie: Integration). Dann "Shopping Manager" installieren.
+#    - HA neu starten, dann: Einstellungen -> Geräte & Dienste -> Integration
+#      hinzufügen -> "Shopping Manager" -> Host-URL eintragen
+#      (z.B. http://<server>:3000, ggf. mit API-Token).
+#    - Ergebnis: 3 Sensoren (offen/abgehakt/gesamt) + native Todo-Liste
+#      "Einkaufsliste" + Services zum Hinzufügen/Abhaken.
+#
+# 2) MANUELL (ohne HACS): REST-Sensor + Webhook
+#    (siehe unten, falls du die Komponente nicht nutzen willst)
+# ============================================================
+
+# ---------- Variante 2a: REST-Sensor (manuell) ----------
+# Ersetze <HOST> durch die erreichbare URL deines Backends (z.B. http://192.168.1.50:3000)
+sensor:
+  - platform: rest
+    name: Einkaufsliste
+    resource: http://<HOST>/api/ha/state
+    scan_interval: 60
+    value_template: "{{ value_json.open_count }}"
+    json_attributes:
+      - open_count
+      - checked_count
+      - total_count
+      - next_item
+    unit_of_measurement: "Artikel"
+
+# ---------- Variante 2b: Automatisierung per Webhook (manuell) ----------
+# Ersetze <HOST> und ggf. <TOKEN> (nur wenn API_TOKEN im Backend gesetzt ist).
+automation:
+  - alias: "Sprache: Artikel zur Einkaufsliste hinzufügen"
+    trigger:
+      - platform: conversation
+        command: "setze {{ item }} auf die einkaufsliste"
+    action:
+      - service: rest_command.shopping_add
+        data:
+          name: "{{ item }}"
+    # Rest Command unten ergänzen
+
+rest_command:
+  shopping_add:
+    url: "http://<HOST>/api/ha/webhook?token=<TOKEN>"
+    method: POST
+    content_type: "application/json"
+    payload: '{"name": "{{ name }}"}'
